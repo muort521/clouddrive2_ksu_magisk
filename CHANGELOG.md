@@ -11,7 +11,3 @@
 - `sepolicy.rule` 去除 Magisk 专有 `magisk` domain，增加 `ksu` domain
 - `customize.sh` 修正脚本属主为 `0 0`，支持模块内自带 busybox
 - `service.sh` 为 `sys.boot_completed` 等待增加超时
-
-## v1.1.5-r12
-
-- 初始版本
