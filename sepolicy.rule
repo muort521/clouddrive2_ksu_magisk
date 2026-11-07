@@ -1,0 +1,14 @@
+# CloudDrive2 (v1.1.3 aarch64) SELinux Policy Rules for Magisk / KernelSU / APatch
+# 允许守护进程访问 /dev/fuse 设备节点并执行 FUSE3 挂载系统调用
+allow su fuse_device chr_file { open read write ioctl getattr setattr }
+allow magisk fuse_device chr_file { open read write ioctl getattr setattr }
+allow init fuse_device chr_file { open read write ioctl getattr setattr }
+
+# 允许在全局命名空间与任意用户在 WebUI 指定的存储目录上挂载 FUSE 文件系统
+allow su fuse filesystem { mount unmount remount getattr }
+allow magisk fuse filesystem { mount unmount remount getattr }
+allow su mnt_user_file dir { search read write open getattr mounton add_name remove_name }
+allow su sdcardfs dir { search read write open getattr mounton add_name remove_name }
+allow su fuse dir { search read write open getattr mounton add_name remove_name }
+allow su storage_file dir { search read write open getattr mounton }
+allow su rootfs dir { mounton }

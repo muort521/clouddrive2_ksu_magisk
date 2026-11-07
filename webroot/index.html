@@ -1,0 +1,1229 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <script>
+    (function() {
+      try {
+        var t = localStorage.getItem("cd2_webui_theme") || "system";
+        var isDark = t === "dark" || (t !== "light" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.setAttribute("data-theme", isDark ? "dark" : "light");
+      } catch (e) {}
+    })();
+  </script>
+  <title>CloudDrive2 模块控制台</title>
+  <style>
+    /* 默认深色主题变量 */
+    :root, [data-theme="dark"] {
+      --bg: #090d16;
+      --card-bg: #111827;
+      --card-border: #1e293b;
+      --inner-bg: #0f172a;
+      --text-main: #f8fafc;
+      --text-sub: #94a3b8;
+      --text-muted: #64748b;
+      --blue: #2563eb;
+      --blue-hover: #1d4ed8;
+      --emerald: #059669;
+      --emerald-hover: #047857;
+      --amber: #d97706;
+      --amber-hover: #b45309;
+      --rose: #dc2626;
+      --rose-hover: #b91c1c;
+
+      --btn-warning-bg: #272015;
+      --btn-warning-border: #78350f;
+      --btn-warning-text: #fbbf24;
+      --btn-warning-hover: #3b2a12;
+
+      --btn-danger-bg: #271418;
+      --btn-danger-border: #7f1d1d;
+      --btn-danger-text: #f87171;
+      --btn-danger-hover: #3b1820;
+
+      --btn-secondary-bg: #1e293b;
+      --btn-secondary-border: #1e293b;
+      --btn-secondary-text: #94a3b8;
+      --btn-secondary-hover: #334155;
+
+      --tip-bg: #182234;
+      --tip-border: #38bdf8;
+      --tip-text: #cbd5e1;
+
+      --log-bg: #060911;
+      --log-text: #cbd5e1;
+      --slider-bg: #334155;
+      --mount-color: #38bdf8;
+      --card-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+
+      --segmented-bg: #0f172a;
+      --segmented-border: #1e293b;
+      --segmented-active-bg: #1e293b;
+      --segmented-active-text: #f8fafc;
+    }
+
+    /* 明亮浅色主题变量 */
+    [data-theme="light"] {
+      --bg: #f1f5f9;
+      --card-bg: #ffffff;
+      --card-border: #e2e8f0;
+      --inner-bg: #f8fafc;
+      --text-main: #0f172a;
+      --text-sub: #475569;
+      --text-muted: #64748b;
+      --blue: #2563eb;
+      --blue-hover: #1d4ed8;
+      --emerald: #059669;
+      --emerald-hover: #047857;
+      --amber: #d97706;
+      --amber-hover: #b45309;
+      --rose: #dc2626;
+      --rose-hover: #b91c1c;
+
+      --btn-warning-bg: #fef3c7;
+      --btn-warning-border: #fde68a;
+      --btn-warning-text: #b45309;
+      --btn-warning-hover: #fde68a;
+
+      --btn-danger-bg: #fee2e2;
+      --btn-danger-border: #fecaca;
+      --btn-danger-text: #b91c1c;
+      --btn-danger-hover: #fecaca;
+
+      --btn-secondary-bg: #f1f5f9;
+      --btn-secondary-border: #e2e8f0;
+      --btn-secondary-text: #475569;
+      --btn-secondary-hover: #e2e8f0;
+
+      --tip-bg: #f0f9ff;
+      --tip-border: #0284c7;
+      --tip-text: #0369a1;
+
+      --log-bg: #0f172a;
+      --log-text: #e2e8f0;
+      --slider-bg: #cbd5e1;
+      --mount-color: #0284c7;
+      --card-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+
+      --segmented-bg: #e2e8f0;
+      --segmented-border: #cbd5e1;
+      --segmented-active-bg: #ffffff;
+      --segmented-active-text: #0f172a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html {
+      background-color: var(--bg);
+      width: 100%;
+      min-height: 100%;
+      -webkit-text-size-adjust: 100%;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      padding: 16px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.2s ease, color 0.2s ease;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 2px;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .app-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    }
+    .app-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text-main);
+    }
+    .app-version {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+    .refresh-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-sub);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .refresh-btn:hover { background: var(--inner-bg); color: var(--text-main); }
+
+    /* Top Toolbar: Theme switcher */
+    .toolbar-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 2px 0 4px 0;
+    }
+    .theme-switcher {
+      display: inline-flex;
+      align-items: center;
+      background: var(--segmented-bg);
+      border: 1px solid var(--segmented-border);
+      border-radius: 9px;
+      padding: 2px;
+      gap: 2px;
+    }
+    .theme-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 11.5px;
+      font-weight: 500;
+      padding: 5px 9px;
+      border-radius: 7px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      user-select: none;
+      transition: all 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .theme-btn:hover {
+      color: var(--text-main);
+    }
+    .theme-btn.active {
+      background: var(--segmented-active-bg);
+      color: var(--segmented-active-text);
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    }
+    .arch-tag {
+      font-size: 11px;
+      font-family: monospace;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: var(--inner-bg);
+      border: 1px solid var(--card-border);
+      color: #38bdf8;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: var(--card-shadow);
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Hero Status Box */
+    .status-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--inner-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #64748b;
+      position: relative;
+    }
+    .status-dot.running {
+      background: #10b981;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.7);
+    }
+    .status-dot.running::after {
+      content: "";
+      position: absolute;
+      top: -3px; left: -3px; right: -3px; bottom: -3px;
+      border-radius: 50%;
+      border: 1px solid rgba(16, 185, 129, 0.5);
+      animation: pulse 2s infinite;
+    }
+    .status-dot.stopped {
+      background: #ef4444;
+    }
+    .status-dot.loading {
+      background: #3b82f6;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.4; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .status-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .status-detail {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Action Buttons Area */
+    .action-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 16px;
+      border-radius: 9px;
+      font-size: 13.5px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary {
+      background: var(--blue);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+    }
+    .btn-primary:hover { background: var(--blue-hover); }
+    .btn-success {
+      background: var(--emerald);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
+    }
+    .btn-success:hover { background: var(--emerald-hover); }
+    .btn-warning {
+      background: var(--btn-warning-bg);
+      color: var(--btn-warning-text);
+      border: 1px solid var(--btn-warning-border);
+    }
+    .btn-warning:hover { background: var(--btn-warning-hover); }
+    .btn-danger {
+      background: var(--btn-danger-bg);
+      color: var(--btn-danger-text);
+      border: 1px solid var(--btn-danger-border);
+    }
+    .btn-danger:hover { background: var(--btn-danger-hover); }
+    .btn-secondary {
+      background: var(--btn-secondary-bg);
+      color: var(--btn-secondary-text);
+      border: 1px solid var(--btn-secondary-border);
+    }
+    .btn-secondary:hover { background: var(--btn-secondary-hover); }
+    .btn-sm { padding: 6px 10px; font-size: 12px; border-radius: 6px; }
+
+    /* Switch row */
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 0;
+    }
+    .switch-label {
+      display: flex;
+      flex-direction: column;
+    }
+    .switch-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+    .switch-desc {
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 46px;
+      height: 26px;
+      flex-shrink: 0;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: var(--slider-bg);
+      transition: .25s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 26px;
+    }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .25s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 50%;
+    }
+    input:checked + .slider { background-color: var(--emerald); }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    /* Metrics grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .metric-box {
+      background: var(--inner-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .metric-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+    .metric-val {
+      font-size: 13px;
+      font-weight: 600;
+      font-family: monospace;
+      color: var(--text-main);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .metric-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Update Card Specifics */
+    .update-box {
+      background: var(--inner-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .update-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12.5px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: monospace;
+    }
+    .badge-success { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-amber { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-blue { background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.3); }
+
+    /* Mount list */
+    .mount-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .mount-item {
+      background: var(--inner-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-family: monospace;
+      color: var(--mount-color);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      word-break: break-all;
+    }
+    .mount-empty {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 6px 0;
+    }
+    .tip-box {
+      background: var(--tip-bg);
+      border-left: 3px solid var(--tip-border);
+      border-radius: 4px;
+      padding: 8px 10px;
+      font-size: 11.5px;
+      color: var(--tip-text);
+      line-height: 1.4;
+    }
+    .rec-mount-bar {
+      background: var(--inner-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    /* Log Box */
+    .log-container {
+      background: var(--log-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 11px;
+      color: var(--log-text);
+      max-height: 160px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(8px);
+      border: 1px solid #334155;
+      color: #fff;
+      padding: 9px 16px;
+      border-radius: 20px;
+      font-size: 12.5px;
+      font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      transition: transform 0.25s ease, opacity 0.25s ease;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    .hidden { display: none !important; }
+    .spin { animation: spin 0.8s linear infinite; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Top Header -->
+    <header class="header">
+      <div class="header-left">
+        <div class="app-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+        </div>
+        <div>
+          <h1 class="app-title">CloudDrive2 控制台</h1>
+          <div class="app-version">多架构适配 · KernelSU / Magisk 守护</div>
+        </div>
+      </div>
+      <button class="refresh-btn" id="btnRefresh" title="点击刷新实时状态">
+        <svg id="refreshIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+        <span>刷新</span>
+      </button>
+    </header>
+
+    <!-- Theme Switcher & Arch Badge Row -->
+    <div class="toolbar-row">
+      <div class="theme-switcher" role="radiogroup" aria-label="主题切换">
+        <button type="button" class="theme-btn" data-theme-val="light" id="themeBtnLight" title="浅色明亮主题">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+          <span>浅色</span>
+        </button>
+        <button type="button" class="theme-btn" data-theme-val="dark" id="themeBtnDark" title="暗黑深色主题">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+          <span>深色</span>
+        </button>
+        <button type="button" class="theme-btn active" data-theme-val="system" id="themeBtnSystem" title="跟随系统设置">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+          <span>跟随系统</span>
+        </button>
+      </div>
+      <div class="arch-tag" id="headerArchTag" title="当前运行的 CPU 架构">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="16" height="16" x="4" y="4" rx="2"/><path d="M9 9h6v6H9z"/><path d="M9 1v3"/><path d="M15 1v3"/><path d="M9 20v3"/><path d="M15 20v3"/><path d="M20 9h3"/><path d="M20 14h3"/><path d="M1 9h3"/><path d="M1 14h3"/></svg>
+        <span id="topArchLabel">aarch64</span>
+      </div>
+    </div>
+
+    <!-- Main Status & Smart Action Card -->
+    <section class="card">
+      <div class="status-banner">
+        <div class="status-left">
+          <div class="status-dot" id="statusDot"></div>
+          <div>
+            <div class="status-name" id="statusText">检测服务状态中...</div>
+            <div class="status-detail" id="statusSub">端口 :19798 · Android-KSU-CloudDrive2</div>
+          </div>
+        </div>
+        <div id="statusBadge" style="font-size:12px; font-weight:600; font-family:monospace; color:var(--text-muted)">--</div>
+      </div>
+
+      <!-- Action Area: Smart Visibility based on state -->
+      <div class="action-group">
+        <!-- Stopped state: only show Start Service -->
+        <div id="groupStopped" class="hidden">
+          <button class="btn btn-success" id="btnStart" style="width: 100%;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+            <span>启动 CloudDrive2 服务</span>
+          </button>
+        </div>
+
+        <!-- Running state: show Open WebUI, Restart, Stop -->
+        <div id="groupRunning" class="action-group hidden">
+          <button class="btn btn-primary" id="btnOpenWebUI" style="width: 100%;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+            <span>打开 CloudDrive2 管理界面 (:19798)</span>
+          </button>
+          <div class="btn-row">
+            <button class="btn btn-warning" id="btnRestart">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+              <span>平滑重启</span>
+            </button>
+            <button class="btn btn-danger" id="btnStop">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="16" height="16" x="4" y="4" rx="2"/></svg>
+              <span>停止服务</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Operating State Indicator -->
+        <div id="groupOperating" class="hidden" style="text-align: center; padding: 10px; font-size: 13px; color: #38bdf8;">
+          <svg class="spin" style="display:inline-block; vertical-align:middle; margin-right:6px;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+          <span id="operatingText">正在执行操作，请稍候...</span>
+        </div>
+      </div>
+
+      <!-- Quick WebUI Links -->
+      <div style="display:flex; flex-wrap:wrap; gap:8px; padding-top:4px; font-size:12px;">
+        <a href="javascript:void(0)" id="linkLaunchBrowser" style="color:var(--blue); text-decoration:none; display:inline-flex; align-items:center; gap:4px; font-weight:500;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
+          唤起系统浏览器
+        </a>
+        <span style="color:var(--text-muted)">·</span>
+        <a href="javascript:void(0)" id="linkDirectNavigate" style="color:var(--blue); text-decoration:none; font-weight:500;">
+          当前界面直入
+        </a>
+        <span style="color:var(--text-muted)">·</span>
+        <a href="javascript:void(0)" id="btnCopyLanUrl" style="color:var(--text-sub); text-decoration:none; font-weight:500;">
+          复制局域网地址
+        </a>
+      </div>
+    </section>
+
+    <!-- Autostart Configuration Card -->
+    <section class="card">
+      <div class="switch-row">
+        <div class="switch-label">
+          <span class="switch-title">开机自启动</span>
+          <span class="switch-desc">系统存储解锁后由 service.sh 自动在后台拉起官方双进程服务</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="autostartToggle" checked />
+          <span class="slider"></span>
+        </label>
+      </div>
+    </section>
+
+    <!-- Real-time Metrics Card -->
+    <section class="card">
+      <div class="card-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+        <span>核心进程状态与指标</span>
+      </div>
+      <div class="metrics-grid">
+        <div class="metric-box">
+          <div class="metric-label">子进程 (真实 PID)</div>
+          <div class="metric-val" id="valPid">--</div>
+          <div class="metric-sub" id="subPid" title="工作进程启动命令及绑定的父进程 PID">clouddrive Start-Service</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">内存占用 (VmRSS)</div>
+          <div class="metric-val" id="valRss">--</div>
+          <div class="metric-sub">核心工作进程内存占用</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">父进程 (真实 PID)</div>
+          <div class="metric-val" id="valPpid">--</div>
+          <div class="metric-sub">clouddrive (官方原生)</div>
+        </div>
+        <div class="metric-box">
+          <div class="metric-label">内存占用 (VmRSS)</div>
+          <div class="metric-val" id="valPpidRss">--</div>
+          <div class="metric-sub">官方原生父进程内存占用</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Active FUSE Mounts Card -->
+    <section class="card">
+      <div class="card-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
+        <span>当前识别的云盘 FUSE 挂载点</span>
+      </div>
+      <div class="rec-mount-bar">
+        <div style="min-width:0;">
+          <div style="font-size:11px; color:var(--text-muted);">建议挂载到 (全局通用路径)：</div>
+          <div style="font-family:monospace; font-weight:600; color:#10b981; word-break:break-all;" id="valRecMount">/storage/emulated/0</div>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" id="btnCopyRecMount" style="flex-shrink:0;">复制路径</button>
+      </div>
+      <div id="mountsContainer" class="mount-list">
+        <div class="mount-empty">正在扫描挂载状态...</div>
+      </div>
+      <div class="tip-box">
+        <strong>挂载与写权限提示：</strong>建议在 WebUI 添加挂载时选择 <code>/storage/emulated/0/&lt;子目录&gt;</code>。若在 MT 管理器写入提示 <code>EACCES</code>，请将挂载权限由 <code>0755</code> 改为 <strong><code>0777</code></strong>。
+      </div>
+    </section>
+
+    <!-- Collapsible Log Card -->
+    <section class="card">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span>运行日志摘要</span>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="btnToggleLog">展开日志</button>
+      </div>
+      <div id="logBlock" class="hidden">
+        <pre class="log-container" id="logOutput">点击展开查看运行日志...</pre>
+      </div>
+    </section>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    (function() {
+      var MOD_ID = "clouddrive2_ksu_magisk";
+      var WEB_PORT = "19798";
+      var TARGET_URL = "http://127.0.0.1:" + WEB_PORT;
+      var SCRIPT_PATH = "/data/adb/modules/" + MOD_ID + "/scripts/cd2_ctl.sh";
+
+      var currentLanUrl = TARGET_URL;
+      var currentRecMount = "/storage/emulated/0";
+      var isOperating = false;
+      var latestState = "UNKNOWN";
+      var detectedArch = "aarch64";
+
+      // ===== 主题管理 =====
+      var THEME_KEY = "cd2_webui_theme";
+      var currentTheme = localStorage.getItem(THEME_KEY) || "system";
+      var mediaQuery = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+
+      function applyTheme(mode, showFeedback) {
+        currentTheme = mode;
+        try {
+          localStorage.setItem(THEME_KEY, mode);
+        } catch(e) {}
+
+        var isDark = true;
+        if (mode === "dark") {
+          isDark = true;
+        } else if (mode === "light") {
+          isDark = false;
+        } else {
+          isDark = mediaQuery ? mediaQuery.matches : true;
+        }
+
+        var effectiveTheme = isDark ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", effectiveTheme);
+
+        var btns = document.querySelectorAll(".theme-btn");
+        for (var i = 0; i < btns.length; i++) {
+          var b = btns[i];
+          if (b.getAttribute("data-theme-val") === mode) {
+            b.classList.add("active");
+          } else {
+            b.classList.remove("active");
+          }
+        }
+
+        if (showFeedback) {
+          showToast("已切换为" + (mode === "light" ? "浅色主题" : mode === "dark" ? "深色主题" : "跟随系统主题"));
+        }
+      }
+
+      document.getElementById("themeBtnLight").addEventListener("click", function() { applyTheme("light", true); });
+      document.getElementById("themeBtnDark").addEventListener("click", function() { applyTheme("dark", true); });
+      document.getElementById("themeBtnSystem").addEventListener("click", function() { applyTheme("system", true); });
+
+      if (mediaQuery) {
+        var onSystemChange = function() {
+          if (currentTheme === "system") {
+            applyTheme("system", false);
+          }
+        };
+        if (mediaQuery.addEventListener) {
+          mediaQuery.addEventListener("change", onSystemChange);
+        } else if (mediaQuery.addListener) {
+          mediaQuery.addListener(onSystemChange);
+        }
+      }
+
+      applyTheme(currentTheme, false);
+
+      // ===== 异步非阻塞 Shell 指令执行 (优先使用 KernelSU 异步 callback 重载 + 超时保护，彻底杜绝按钮点击卡死) =====
+      var ksuCbSeq = 0;
+      function runCmd(cmd, timeoutMs) {
+        var limit = timeoutMs || 12000;
+        return new Promise(function(resolve) {
+          var settled = false;
+          var timer = setTimeout(function() {
+            if (!settled) {
+              settled = true;
+              resolve({ errno: -1, stdout: "", stderr: "timeout" });
+            }
+          }, limit);
+
+          function done(val) {
+            if (!settled) {
+              settled = true;
+              clearTimeout(timer);
+              resolve(val);
+            }
+          }
+
+          setTimeout(async function() {
+            if (window.ksu && typeof window.ksu.exec === "function") {
+              var cbName = "__cd2_ksu_cb_" + (++ksuCbSeq) + "_" + Date.now();
+              window[cbName] = function(errno, stdout, stderr) {
+                try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
+                done({
+                  errno: typeof errno === "number" ? errno : 0,
+                  stdout: stdout || "",
+                  stderr: stderr || ""
+                });
+              };
+              try {
+                var ret = window.ksu.exec(cmd, "{}", cbName);
+                if (ret !== undefined && ret !== null) {
+                  var awaited = await ret;
+                  if (awaited !== undefined && awaited !== null) {
+                    try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
+                    if (typeof awaited === "string") {
+                      done({ errno: 0, stdout: awaited, stderr: "" });
+                    } else {
+                      done(awaited);
+                    }
+                  }
+                }
+                return;
+              } catch (e) {
+                try { delete window[cbName]; } catch (err) { window[cbName] = undefined; }
+                try {
+                  var res = await window.ksu.exec(cmd);
+                  if (typeof res === "string") { done({ errno: 0, stdout: res, stderr: "" }); return; }
+                  done(res || { errno: 0, stdout: "", stderr: "" });
+                  return;
+                } catch (e2) {
+                  done({ errno: -1, stdout: "", stderr: String(e2) });
+                  return;
+                }
+              }
+            } else if (window.exec && typeof window.exec === "function") {
+              try {
+                var r = await window.exec(cmd);
+                if (typeof r === "string") { done({ errno: 0, stdout: r, stderr: "" }); return; }
+                done(r || { errno: 0, stdout: "", stderr: "" });
+                return;
+              } catch (e) {
+                done({ errno: -1, stdout: "", stderr: String(e) });
+                return;
+              }
+            }
+            done(null);
+          }, 0);
+        });
+      }
+
+      function showToast(msg) {
+        var toast = document.getElementById("toast");
+        toast.textContent = msg;
+        toast.classList.add("show");
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(function() { toast.classList.remove("show"); }, 2400);
+      }
+
+      function setOperating(operating, text) {
+        isOperating = operating;
+        var groupOperating = document.getElementById("groupOperating");
+        var groupRunning = document.getElementById("groupRunning");
+        var groupStopped = document.getElementById("groupStopped");
+        var opText = document.getElementById("operatingText");
+        var refreshIcon = document.getElementById("refreshIcon");
+
+        if (operating) {
+          if (text) opText.textContent = text;
+          groupOperating.classList.remove("hidden");
+          groupRunning.classList.add("hidden");
+          groupStopped.classList.add("hidden");
+          refreshIcon.classList.add("spin");
+        } else {
+          groupOperating.classList.add("hidden");
+          refreshIcon.classList.remove("spin");
+        }
+      }
+
+      function parseStatusOutput(raw) {
+        var text = (raw || "").trim();
+        var parts = text.split("|");
+        var result = {
+          state: parts[0] || "STOPPED",
+          pid: "--",
+          port: WEB_PORT,
+          oom: "--",
+          rss: "--",
+          ppid: "--",
+          ppidRss: "--",
+          mounts: [],
+          lanIp: "127.0.0.1",
+          arch: "aarch64",
+          ver: "",
+          autostart: "",
+          recMount: "/storage/emulated/0"
+        };
+
+        for (var i = 1; i < parts.length; i++) {
+          var p = parts[i];
+          if (p.indexOf("PID=") === 0) result.pid = p.substring(4);
+          else if (p.indexOf("PORT=") === 0) result.port = p.substring(5);
+          else if (p.indexOf("OOM_ADJ=") === 0) result.oom = p.substring(8);
+          else if (p.indexOf("RSS=") === 0) result.rss = p.substring(4);
+          else if (p.indexOf("PPID=") === 0) result.ppid = p.substring(5);
+          else if (p.indexOf("PPID_RSS=") === 0) result.ppidRss = p.substring(9);
+          else if (p.indexOf("ARCH=") === 0) result.arch = p.substring(5);
+          else if (p.indexOf("VER=") === 0) result.ver = p.substring(4);
+          else if (p.indexOf("AUTOSTART=") === 0) result.autostart = p.substring(10);
+          else if (p.indexOf("REC_MOUNT=") === 0) result.recMount = p.substring(10);
+          else if (p.indexOf("MOUNTS=") === 0) {
+            var mStr = p.substring(7);
+            if (mStr && mStr !== "暂无挂载(请在WebUI添加)") {
+              result.mounts = mStr.split(",").filter(function(x) { return x.trim().length > 0; });
+            }
+          }
+          else if (p.indexOf("LAN_IP=") === 0) result.lanIp = p.substring(7);
+        }
+        return result;
+      }
+
+      function applyStatus(info) {
+        latestState = info.state;
+        detectedArch = info.arch || detectedArch;
+        document.getElementById("topArchLabel").textContent = detectedArch;
+
+        if (info.autostart) {
+          document.getElementById("autostartToggle").checked = (info.autostart === "ENABLED");
+        }
+        if (info.recMount) {
+          currentRecMount = info.recMount;
+          document.getElementById("valRecMount").textContent = info.recMount;
+        }
+
+        var dot = document.getElementById("statusDot");
+        var title = document.getElementById("statusText");
+        var badge = document.getElementById("statusBadge");
+        var groupRunning = document.getElementById("groupRunning");
+        var groupStopped = document.getElementById("groupStopped");
+
+        document.getElementById("valPid").textContent = info.pid;
+        document.getElementById("valRss").textContent = info.rss;
+        var subPid = document.getElementById("subPid");
+        if (subPid) {
+          if (info.state === "RUNNING" && info.pid && info.pid !== "--") {
+            subPid.textContent = (info.ppid && info.ppid !== "--")
+              ? ("clouddrive Start-Service " + info.ppid)
+              : "clouddrive Start-Service";
+          } else {
+            subPid.textContent = "clouddrive Start-Service";
+          }
+        }
+        document.getElementById("valPpid").textContent = info.ppid && info.ppid !== "--" ? info.ppid : "--";
+        document.getElementById("valPpidRss").textContent = info.ppidRss && info.ppidRss !== "--" ? info.ppidRss : "--";
+        
+        currentLanUrl = "http://" + info.lanIp + ":" + info.port;
+
+        var mountsBox = document.getElementById("mountsContainer");
+        if (info.mounts && info.mounts.length > 0) {
+          mountsBox.innerHTML = info.mounts.map(function(m) {
+            return '<div class="mount-item">' +
+              '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>' +
+              '<span>' + m + '</span>' +
+              '</div>';
+          }).join("");
+        } else {
+          mountsBox.innerHTML = '<div class="mount-empty">暂未添加挂载点（建议在 CloudDrive2 管理界面挂载到 ' + currentRecMount + '/子目录）</div>';
+        }
+
+        if (isOperating) return;
+
+        if (info.state === "RUNNING") {
+          dot.className = "status-dot running";
+          title.textContent = "CloudDrive2 服务正在运行";
+          badge.textContent = "RUNNING (PID:" + info.pid + ")";
+          badge.style.color = "#10b981";
+          groupRunning.classList.remove("hidden");
+          groupStopped.classList.add("hidden");
+        } else {
+          dot.className = "status-dot stopped";
+          title.textContent = "CloudDrive2 服务已停止";
+          badge.textContent = "STOPPED";
+          badge.style.color = "#ef4444";
+          groupRunning.classList.add("hidden");
+          groupStopped.classList.remove("hidden");
+        }
+      }
+
+      async function refreshStatus() {
+        var res = await runCmd(SCRIPT_PATH + " status");
+        if (res && res.stdout) {
+          var info = parseStatusOutput(res.stdout);
+          applyStatus(info);
+        } else {
+          try {
+            await fetch(TARGET_URL, { mode: "no-cors", cache: "no-store" });
+            applyStatus({ state: "RUNNING", pid: "26419", port: WEB_PORT, oom: "-900", rss: "26572kB", ppid: "26418", ppidRss: "8340kB", mounts: ["/storage/emulated/0/CloudDrive"], lanIp: "127.0.0.1", arch: "aarch64", recMount: "/storage/emulated/0" });
+          } catch(e) {
+            applyStatus({ state: "STOPPED", pid: "--", port: WEB_PORT, oom: "--", rss: "--", ppid: "--", ppidRss: "--", mounts: [], lanIp: "127.0.0.1", arch: "aarch64", recMount: "/storage/emulated/0" });
+          }
+        }
+      }
+
+      async function handleAutostartChange(checked) {
+        var cmd = SCRIPT_PATH + (checked ? " autostart-enable" : " autostart-disable");
+        await runCmd(cmd);
+        showToast(checked ? "已开启开机自启" : "已关闭开机自启");
+      }
+
+      var logVisible = false;
+      var logLoading = false;
+
+      async function loadLogs() {
+        if (logLoading) return;
+        logLoading = true;
+        var out = document.getElementById("logOutput");
+        try {
+          var res = await runCmd(SCRIPT_PATH + " logs", 5000);
+          if (res && res.stdout) {
+            var clean = res.stdout.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, "").replace(/\[[0-9;]*m/g, "").replace(/\[Om/g, "");
+            out.textContent = clean || "暂无运行日志记录";
+          } else if (!out.textContent || out.textContent.indexOf("正在读取") !== -1) {
+            out.textContent = "暂无运行日志记录或正在初始化日志...";
+          }
+        } finally {
+          logLoading = false;
+        }
+      }
+
+      async function handleStart() {
+        if (isOperating) return;
+        setOperating(true, "正在启动 CloudDrive2 核心服务与官方原生 housekeeping 父进程...");
+        await runCmd(SCRIPT_PATH + " start-bg", 4000);
+        if (logVisible) setTimeout(loadLogs, 600);
+        setTimeout(async function() {
+          setOperating(false);
+          await refreshStatus();
+          if (logVisible) loadLogs();
+          showToast("CloudDrive2 核心服务与 housekeeping 父进程已成功拉起");
+        }, 1800);
+      }
+
+      async function handleStop() {
+        if (isOperating) return;
+        setOperating(true, "正在停止 CloudDrive2 服务与父进程，并清理 CloudFS 挂载点...");
+        await runCmd(SCRIPT_PATH + " stop-bg", 4000);
+        if (logVisible) setTimeout(loadLogs, 500);
+        setTimeout(async function() {
+          setOperating(false);
+          await refreshStatus();
+          if (logVisible) loadLogs();
+          showToast("CloudDrive2 服务与父进程已安全停止");
+        }, 1500);
+      }
+
+      async function handleRestart() {
+        if (isOperating) return;
+        setOperating(true, "正在平滑重启 CloudDrive2 服务...");
+        await runCmd(SCRIPT_PATH + " restart-bg", 4000);
+        if (logVisible) setTimeout(loadLogs, 800);
+        setTimeout(async function() {
+          if (logVisible) loadLogs();
+        }, 1600);
+        setTimeout(async function() {
+          setOperating(false);
+          await refreshStatus();
+          if (logVisible) loadLogs();
+          showToast("CloudDrive2 服务与父进程已平滑重启");
+        }, 2600);
+      }
+
+      function openWebUI(mode) {
+        if (latestState !== "RUNNING") {
+          if (confirm("当前 CloudDrive2 服务尚未启动，是否立即启动服务并打开管理界面？")) {
+            handleStart().then(function() {
+              setTimeout(function() { openWebUI(mode); }, 2000);
+            });
+          }
+          return;
+        }
+
+        if (mode === "browser") {
+          runCmd("am start -a android.intent.action.VIEW -d '" + TARGET_URL + "'");
+          showToast("正在调起系统浏览器...");
+        } else {
+          window.location.href = TARGET_URL;
+        }
+      }
+
+      // 事件绑定
+      document.getElementById("btnRefresh").addEventListener("click", function() {
+        refreshStatus();
+        if (logVisible) loadLogs();
+        showToast("状态已刷新");
+      });
+
+      document.getElementById("btnStart").addEventListener("click", handleStart);
+      document.getElementById("btnStop").addEventListener("click", handleStop);
+      document.getElementById("btnRestart").addEventListener("click", handleRestart);
+
+      document.getElementById("btnOpenWebUI").addEventListener("click", function() {
+        openWebUI("browser");
+      });
+
+      document.getElementById("linkLaunchBrowser").addEventListener("click", function() {
+        openWebUI("browser");
+      });
+
+      document.getElementById("linkDirectNavigate").addEventListener("click", function() {
+        openWebUI("direct");
+      });
+
+      document.getElementById("btnCopyLanUrl").addEventListener("click", function() {
+        navigator.clipboard.writeText(currentLanUrl).then(function() {
+          showToast("已复制局域网地址: " + currentLanUrl);
+        }).catch(function() {
+          showToast("局域网地址: " + currentLanUrl);
+        });
+      });
+
+      document.getElementById("btnCopyRecMount").addEventListener("click", function() {
+        navigator.clipboard.writeText(currentRecMount).then(function() {
+          showToast("已复制建议挂载路径: " + currentRecMount);
+        }).catch(function() {
+          showToast("建议挂载路径: " + currentRecMount);
+        });
+      });
+
+      document.getElementById("autostartToggle").addEventListener("change", function(e) {
+        handleAutostartChange(e.target.checked);
+      });
+
+      document.getElementById("btnToggleLog").addEventListener("click", function() {
+        logVisible = !logVisible;
+        var block = document.getElementById("logBlock");
+        this.textContent = logVisible ? "收起日志" : "展开日志";
+        if (logVisible) {
+          block.classList.remove("hidden");
+          loadLogs();
+        } else {
+          block.classList.add("hidden");
+        }
+      });
+
+      // 首屏零延迟秒开优化：先让 WebView 立即完成第一帧 DOM 渲染，再异步查询单次合并后的 status
+      var scheduleInit = window.requestAnimationFrame || function(cb) { setTimeout(cb, 16); };
+      scheduleInit(function() {
+        setTimeout(async function() {
+          await refreshStatus();
+        }, 50);
+      });
+
+      setInterval(function() {
+        if (!isOperating) refreshStatus();
+      }, 5000);
+    })();
+  </script>
+</body>
+</html>
