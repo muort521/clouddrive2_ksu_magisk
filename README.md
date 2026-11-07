@@ -2,8 +2,6 @@
 
 专为 Android Root 环境（**KernelSU / KernelSU Next / Magisk v20.4+ / APatch / MMRL**）打造的 **CloudDrive2** 系统级 FUSE3 挂载模块。
 
-- **模块版本**：`v1.1.5-r12 (11512)`
-- **模块作者**：`Muort`
 - **默认 WebUI 端口**：`http://127.0.0.1:19798`
 - **数据持久化目录**：`/data/adb/clouddrive`
 - **官方二进制App发布页**：<https://github.com/cloud-fs/cloud-fs.github.io/releases>
