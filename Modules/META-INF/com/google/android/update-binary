@@ -1,0 +1,39 @@
+#!/sbin/sh
+umask 022
+ui_print() { echo "$1"; }
+
+OUTFD=$2
+ZIPFILE=$3
+
+mount /data 2>/dev/null
+
+# 优先使用 Magisk 的 util_functions（Magisk 设备）
+if [ -f /data/adb/magisk/util_functions.sh ]; then
+  . /data/adb/magisk/util_functions.sh
+  install_module
+  exit 0
+fi
+
+# KernelSU / APatch：无 Magisk，自行实现 install_module
+if [ -n "$KSU" ] || [ -n "$APATCH" ] || [ -d /data/adb/ksu ] || [ -d /data/adb/ap ]; then
+  MODID="clouddrive2_ksu_magisk"
+  MODPATH="/data/adb/modules_update/$MODID"
+  rm -rf "$MODPATH"
+  mkdir -p "$MODPATH"
+
+  # 解压模块（SKIPUNZIP 由 customize.sh 自己处理）
+  unzip -o "$ZIPFILE" -x 'META-INF/*' -d "$MODPATH" >&2
+
+  # 调用 customize.sh
+  [ -f "$MODPATH/customize.sh" ] && . "$MODPATH/customize.sh"
+
+  # 标记安装完成，交给 ksud 下次开机合并
+  touch "$MODPATH/update"
+  ui_print "- 安装完成，重启生效"
+  exit 0
+fi
+
+ui_print "**********************************"
+ui_print " 请使用 Magisk v20.4+ 或 KernelSU / APatch 安装此模块! "
+ui_print "**********************************"
+exit 1

@@ -13,7 +13,7 @@
 1. **多架构智能识别 (`aarch64` / `armv7` / `x86_64`)**
    - 自动识别设备原生 CPU 架构（含 PC 模拟器 `x86_64` 兼容层识别），匹配对应的 `/system/bin/linker64` 或 `/system/bin/linker` 及 Bionic 动态库路径。
    - 刷入时优先使用模块内置的 `bin/clouddrive` 或 `clouddrive-2-android-<arch>-*.tgz` 官方归档；若未内置则动态查询 [CloudDrive2 官方 GitHub Releases (`https://github.com/cloud-fs/cloud-fs.github.io/releases`)](https://github.com/cloud-fs/cloud-fs.github.io/releases) 最新版本并通过国内加速代理（`ghproxy.net` / `gh-proxy.com` / `mirror.ghproxy.com`）自动拉取。
-2. **专属 0ms 秒开 WebUI 控制台 (`webroot/index.html`)**
+2. **WebUI 控制台 (`webroot/index.html`)**
    - 首帧渲染与 Shell 桥接解耦，打开控制台零白屏。
    - 智能显示 **启动 / 平滑重启 / 停止** 按钮、**开机自启** 开关与 **打开 CloudDrive2 管理界面** 入口。
    - 支持 **浅色 / 深色 / 跟随系统** 三态主题切换。

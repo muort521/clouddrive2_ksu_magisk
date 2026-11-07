@@ -57,7 +57,10 @@ else
 fi
 
 # 优先使用 KernelSU / APatch / Magisk 内置的独立 BusyBox 工具链 (与 ksud module action 及 service.sh 环境完全一致)
-export PATH="/data/adb/ksu/bin:/data/adb/ap/bin:/data/adb/magisk:/system/bin:/system/xbin:/sbin:$PATH"
+for _p in /data/adb/ksu/bin /data/adb/ap/bin /data/adb/magisk /system/bin /system/xbin /sbin; do
+  [ -d "$_p" ] && PATH="$_p:$PATH"
+done
+export PATH
 export ASH_STANDALONE=1
 # 仅对 clouddrive 二进制注入 CD2_LD_LIBRARY_PATH，不在全局 Shell 导出 LD_LIBRARY_PATH
 # 避免高通机型 (一加 ColorOS / 魅族 Flyme) 上 /vendor/lib64/libc++.so 污染系统 /system/bin/cmd 与 pm 导致静默崩溃
@@ -110,26 +113,26 @@ run_via_ksud_action() {
   echo "$target_act" > "$WEBUI_ACTION_FILE"
   chmod 0644 "$WEBUI_ACTION_FILE" 2>/dev/null || true
 
-  if [ -x "/data/adb/ksud" ]; then
-    /data/adb/ksud module action "$MODULE_ID" >/dev/null 2>&1
-    if [ ! -f "$WEBUI_ACTION_FILE" ]; then
-      return 0
-    fi
+  # KSU 官方文档：优先用 ksud（KSU/KSU Next 都提供）
+  if command -v ksud >/dev/null 2>&1; then
+    ksud module action "$MODULE_ID" >/dev/null 2>&1
+    [ ! -f "$WEBUI_ACTION_FILE" ] && return 0
   fi
-  if [ -x "/data/adb/ap/bin/apd" ]; then
-    /data/adb/ap/bin/apd module action "$MODULE_ID" >/dev/null 2>&1
-    if [ ! -f "$WEBUI_ACTION_FILE" ]; then
-      return 0
-    fi
+  # APatch
+  if command -v apd >/dev/null 2>&1; then
+    apd module action "$MODULE_ID" >/dev/null 2>&1
+    [ ! -f "$WEBUI_ACTION_FILE" ] && return 0
   fi
 
   rm -f "$WEBUI_ACTION_FILE" 2>/dev/null || true
   switch_to_root_cgroups "$$"
-  if [ -x "/data/adb/ksu/bin/busybox" ]; then
-    CD2_FROM_KSUD_ACTION=1 ASH_STANDALONE=1 /data/adb/ksu/bin/busybox sh -o standalone "$0" "$target_act"
-    return $?
-  elif [ -x "/data/adb/magisk/busybox" ]; then
-    CD2_FROM_KSUD_ACTION=1 ASH_STANDALONE=1 /data/adb/magisk/busybox sh -o standalone "$0" "$target_act"
+  # 模块自带 busybox 兜底（KSU 文档要求模块自包含）
+  local bb=""
+  [ -x "$MODDIR/bin/busybox" ] && bb="$MODDIR/bin/busybox"
+  [ -z "$bb" ] && [ -x "/data/adb/ksu/bin/busybox" ] && bb="/data/adb/ksu/bin/busybox"
+  [ -z "$bb" ] && [ -x "/data/adb/magisk/busybox" ] && bb="/data/adb/magisk/busybox"
+  if [ -n "$bb" ]; then
+    CD2_FROM_KSUD_ACTION=1 ASH_STANDALONE=1 "$bb" sh -o standalone "$0" "$target_act"
     return $?
   fi
   CD2_FROM_KSUD_ACTION=1 "$0" "$target_act"
@@ -138,19 +141,10 @@ run_via_ksud_action() {
 
 switch_to_root_cgroups "$$"
 
-# 关键修复：突破 Android 11-16 (魅族 Flyme / 一加 ColorOS) 管理器 App 的 /data/data 应用数据隔离命名空间 (Mount Namespace Isolation)
-# 当从 WebUI (window.ksu.exec) 调用脚本时，默认处于管理器 App 的隔离 tmpfs 命名空间，其中 /data/data 与 /data/user/0 仅挂载了管理器自身目录；
-# 切换至 PID 1 全局挂载命名空间可保证全局 FUSE 挂载与日志文件在宿主系统与 WebUI 中完全可见！
-if [ -z "$CD2_GLOBAL_MNT_NS" ] && command -v nsenter >/dev/null 2>&1 && [ -r "/proc/1/ns/mnt" ]; then
-  if [ "$(readlink /proc/self/ns/mnt 2>/dev/null)" != "$(readlink /proc/1/ns/mnt 2>/dev/null)" ]; then
-    for _iso_d in /data/data/com.clouddrive* /data/user/0/com.clouddrive*; do
-      if [ -d "$_iso_d" ] && [ "$(stat -c '%u' "$_iso_d" 2>/dev/null)" = "0" ]; then
-        rm -rf "$_iso_d" 2>/dev/null || true
-      fi
-    done
-    export CD2_GLOBAL_MNT_NS=1
-    exec nsenter -t 1 -m -- "$0" "$@"
-  fi
+# KSU 官方：action.sh / service.sh 已在正确的全局命名空间中运行。
+# 此处仅做一次检测并记录告警，不再 exec nsenter 自我重入（避免 KSU 下重复触发/死锁）。
+if [ -r /proc/1/ns/mnt ] && [ "$(readlink /proc/self/ns/mnt 2>/dev/null)" != "$(readlink /proc/1/ns/mnt 2>/dev/null)" ]; then
+  log_msg "warning: running outside init mount namespace, FUSE mounts may be invisible"
 fi
 
 # 实时过滤流中的 ANSI 颜色与控制转义符 (消除 [2m / [31m / [0m 等乱码)

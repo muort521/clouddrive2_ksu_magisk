@@ -8,6 +8,7 @@ WEBUI_ACTION_FILE="$RUN_DIR/webui_action"
 
 export CD2_FROM_KSUD_ACTION=1
 
+# KSU 官方：action.sh 只会被执行一次，无需再 nsenter 回 PID 1 重新 exec。
 # 若由 KSU WebUI 控制台通过 `ksud module action` 委派触发，则直接以原生 ksud Action 环境执行对应指令 (start / stop / restart)，不弹窗打开浏览器
 if [ -f "$WEBUI_ACTION_FILE" ]; then
   REQ_ACT="$(cat "$WEBUI_ACTION_FILE" 2>/dev/null | tr -d ' \r\n')"
@@ -48,8 +49,9 @@ else
 fi
 
 echo "- 最新运行日志摘要:"
-if [ -f "/data/adb/clouddrive/log/2026-11-04.log" ]; then
-  tail -n 6 "/data/adb/clouddrive/log/2026-11-04.log" 2>/dev/null | sed 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/\[[0-9;]*m//g; s/\[Om//g'
+LOG_TODAY="/data/adb/clouddrive/log/$(date '+%Y-%m-%d').log"
+if [ -f "$LOG_TODAY" ]; then
+  tail -n 6 "$LOG_TODAY" 2>/dev/null | sed 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/\[[0-9;]*m//g; s/\[Om//g'
 else
   echo "  (暂无日志)"
 fi

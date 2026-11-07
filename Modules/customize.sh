@@ -95,6 +95,13 @@ mkdir -p "$MODPATH/bin/wwwroot"
 rm -rf "$MODPATH/wwwroot" "$MODPATH/lib64" "$MODPATH/lib" 2>/dev/null || true
 mkdir -p "$MODPATH/scripts"
 
+# 模块自包含 busybox (KSU 官方推荐，避免依赖宿主 busybox 路径)
+if [ -f "$MODPATH/busybox" ]; then
+  cp -af "$MODPATH/busybox" "$MODPATH/bin/busybox"
+  chmod 0755 "$MODPATH/bin/busybox"
+  rm -f "$MODPATH/busybox"
+fi
+
 # 4. 智能选择与部署官方压缩包 (优先内置官方包，次选动态拉取最新版)
 # 国内加速代理镜像池
 PROXIES="https://ghproxy.net/ https://gh-proxy.com/ https://mirror.ghproxy.com/"
@@ -281,8 +288,8 @@ fi
 # 7. 设置严格的二进制执行权限、属主 (UID:0/GID:2000) 与 SELinux 上下文
 ui_print "- 正在设置二进制与脚本执行权限 (0755) 及 SELinux 标签 (u:object_r:system_file:s0)..."
 set_perm_recursive "$MODPATH" 0 0 0755 0644
-set_perm_recursive "$MODPATH/scripts" 0 2000 0755 0755 u:object_r:system_file:s0
-set_perm "$MODPATH/bin/clouddrive" 0 2000 0755 u:object_r:system_file:s0
+set_perm_recursive "$MODPATH/scripts" 0 0 0755 0755 u:object_r:system_file:s0
+set_perm "$MODPATH/bin/clouddrive" 0 0 0755 u:object_r:system_file:s0
 set_perm "$MODPATH/service.sh" 0 0 0755 u:object_r:system_file:s0
 set_perm "$MODPATH/action.sh" 0 0 0755 u:object_r:system_file:s0
 set_perm "$MODPATH/uninstall.sh" 0 0 0755 u:object_r:system_file:s0

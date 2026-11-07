@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/KernelSU-Modules/tools/main/schemas/module.schema.json
+schemaVersion: 1
+id: clouddrive2_ksu_magisk
+name: CloudDrive2 Pro
+summary: 为 Android Root 环境提供 CloudDrive2 系统级 FUSE3 挂载与 WebUI 控制台。
+description: README.md
+license: MIT
+homepage: https://github.com/muort521/clouddrive2_ksu_magisk
+support: https://github.com/muort521/clouddrive2_ksu_magisk/issues
+tags: [clouddrive, fuse, mount, webui, system]
+icon: assets/icon.webp
+
+authors:
+  - name: Muort
+    url: https://github.com/muort521
+
+compatibility:
+  androidMinApi: 28
+  architectures: [arm64-v8a, armeabi-v7a, x86_64]
+
+release:
+  assetPattern: "clouddrive2_ksu_magisk-*.zip"

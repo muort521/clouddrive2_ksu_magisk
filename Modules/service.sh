@@ -13,9 +13,11 @@ if [ -f "$MODDIR/disable_autostart" ] || [ -f "$DATA_DIR/disable_autostart" ] ||
   exit 0
 fi
 
-# 1. 等待系统属性 sys.boot_completed=1
-while [ "$(getprop sys.boot_completed)" != "1" ]; do
+# 1. 等待系统属性 sys.boot_completed=1 (最多等待 120 秒，避免 KSU 下永久卡住)
+wait_boot=0
+while [ "$(getprop sys.boot_completed)" != "1" ] && [ $wait_boot -lt 120 ]; do
   sleep 2
+  wait_boot=$((wait_boot + 2))
 done
 
 # 2. 等待用户 FBE (File-Based Encryption) 存储解密完成 (最多等待 90 秒)
