@@ -57,4 +57,4 @@ sh /data/adb/modules/clouddrive2_ksu_magisk/scripts/cd2_ctl.sh autostart-disable
 
 ## License
 
-[MIT](LICENSE)
+[LicenseRef-Custom-Non-Sale](LICENSE)
