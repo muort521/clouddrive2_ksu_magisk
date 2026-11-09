@@ -707,7 +707,7 @@ fetch_ctl_data() {
   return 1
 }
 
-# 获取模块自身版本 (读取 module.prop 中的 version=v1.1.5-r12，仅用于模块自身更新检测)
+# 获取模块自身版本 (读取 module.prop 中的 version=v1.1.6-r14，仅用于模块自身更新检测)
 get_module_version() {
   local ver=""
   if [ -f "$LIVE_MODDIR/module.prop" ]; then
@@ -715,7 +715,7 @@ get_module_version() {
   elif [ -f "$MODDIR/module.prop" ]; then
     ver=$(grep '^version=' "$MODDIR/module.prop" 2>/dev/null | cut -d= -f2)
   fi
-  [ -z "$ver" ] && ver="v1.1.5-r12"
+  [ -z "$ver" ] && ver="v1.1.6-r14"
   echo "$ver"
 }
 
@@ -764,7 +764,7 @@ get_current_version_code() {
   elif [ -f "$MODDIR/module.prop" ]; then
     code=$(grep '^versionCode=' "$MODDIR/module.prop" 2>/dev/null | cut -d= -f2 | tr -cd '0-9')
   fi
-  [ -z "$code" ] && code="11512"
+  [ -z "$code" ] && code="11614"
   echo "$code"
 }
 

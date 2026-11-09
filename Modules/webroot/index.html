@@ -268,6 +268,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px 10px;
       background: var(--inner-bg);
       border: 1px solid var(--card-border);
       border-radius: 10px;
@@ -277,7 +279,10 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      min-width: 0;
+      flex: 1 1 auto;
     }
+    #statusBadge { flex-shrink: 0; margin-left: auto; white-space: nowrap; }
     .status-dot {
       width: 10px;
       height: 10px;
@@ -344,8 +349,10 @@
       text-decoration: none;
       transition: all 0.15s ease;
       user-select: none;
+      white-space: nowrap;
       -webkit-tap-highlight-color: transparent;
     }
+    .btn-row .btn { padding-left: 8px; padding-right: 8px; }
     .btn:active { transform: scale(0.98); }
     .btn-primary {
       background: var(--blue);
@@ -378,17 +385,77 @@
     }
     .btn-secondary:hover { background: var(--btn-secondary-hover); }
     .btn-sm { padding: 6px 10px; font-size: 12px; border-radius: 6px; }
+    .btn-outline {
+      background: transparent;
+      color: var(--blue);
+      border: 1px solid var(--blue);
+      box-shadow: none;
+    }
+    .btn-outline:hover { background: rgba(37, 99, 235, 0.08); }
+
+    /* Address rows: local / LAN with copy */
+    .url-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .url-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--inner-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 8px;
+    }
+    .url-label {
+      flex-shrink: 0;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      min-width: 32px;
+    }
+    .url-value {
+      flex: 1;
+      min-width: 0;
+      font-family: monospace;
+      font-size: 11.5px;
+      letter-spacing: -0.01em;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .url-value.pending { color: var(--text-muted); font-family: inherit; }
+    .btn-copy {
+      flex-shrink: 0;
+      background: transparent;
+      border: 1px solid var(--card-border);
+      color: var(--blue);
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-copy:hover { background: var(--card-bg); }
+    .btn-copy:active { transform: scale(0.96); }
 
     /* Switch row */
     .switch-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 12px;
       padding: 6px 0;
     }
     .switch-label {
       display: flex;
       flex-direction: column;
+      min-width: 0;
+      flex: 1;
     }
     .switch-title {
       font-size: 13.5px;
@@ -653,10 +720,16 @@
 
         <!-- Running state: show Open WebUI, Restart, Stop -->
         <div id="groupRunning" class="action-group hidden">
-          <button class="btn btn-primary" id="btnOpenWebUI" style="width: 100%;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
-            <span>打开 CloudDrive2 管理界面 (:19798)</span>
-          </button>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btnOpenBrowser">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10Z"/></svg>
+              <span>系统浏览器打开</span>
+            </button>
+            <button class="btn btn-outline" id="btnOpenDirect">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+              <span>当前界面直入</span>
+            </button>
+          </div>
           <div class="btn-row">
             <button class="btn btn-warning" id="btnRestart">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
@@ -676,20 +749,18 @@
         </div>
       </div>
 
-      <!-- Quick WebUI Links -->
-      <div style="display:flex; flex-wrap:wrap; gap:8px; padding-top:4px; font-size:12px;">
-        <a href="javascript:void(0)" id="linkLaunchBrowser" style="color:var(--blue); text-decoration:none; display:inline-flex; align-items:center; gap:4px; font-weight:500;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/></svg>
-          唤起系统浏览器
-        </a>
-        <span style="color:var(--text-muted)">·</span>
-        <a href="javascript:void(0)" id="linkDirectNavigate" style="color:var(--blue); text-decoration:none; font-weight:500;">
-          当前界面直入
-        </a>
-        <span style="color:var(--text-muted)">·</span>
-        <a href="javascript:void(0)" id="btnCopyLanUrl" style="color:var(--text-sub); text-decoration:none; font-weight:500;">
-          复制局域网地址
-        </a>
+      <!-- Quick WebUI Address Rows -->
+      <div class="url-panel">
+        <div class="url-row">
+          <div class="url-label">本机地址</div>
+          <div class="url-value" id="valLocalUrl" title="http://127.0.0.1:19798">http://127.0.0.1:19798</div>
+          <button type="button" class="btn-copy" id="btnCopyLocalUrl">复制</button>
+        </div>
+        <div class="url-row">
+          <div class="url-label">局域网地址</div>
+          <div class="url-value pending" id="valLanUrl" title="正在获取局域网地址">正在获取...</div>
+          <button type="button" class="btn-copy" id="btnCopyLanUrl">复制</button>
+        </div>
       </div>
     </section>
 
@@ -715,7 +786,7 @@
       </div>
       <div class="metrics-grid">
         <div class="metric-box">
-          <div class="metric-label">子进程 (真实 PID)</div>
+          <div class="metric-label">子进程 (PID)</div>
           <div class="metric-val" id="valPid">--</div>
           <div class="metric-sub" id="subPid" title="工作进程启动命令及绑定的父进程 PID">clouddrive Start-Service</div>
         </div>
@@ -725,7 +796,7 @@
           <div class="metric-sub">核心工作进程内存占用</div>
         </div>
         <div class="metric-box">
-          <div class="metric-label">父进程 (真实 PID)</div>
+          <div class="metric-label">父进程 (PID)</div>
           <div class="metric-val" id="valPpid">--</div>
           <div class="metric-sub">clouddrive (官方原生)</div>
         </div>
@@ -782,7 +853,8 @@
       var TARGET_URL = "http://127.0.0.1:" + WEB_PORT;
       var SCRIPT_PATH = "/data/adb/modules/" + MOD_ID + "/scripts/cd2_ctl.sh";
 
-      var currentLanUrl = TARGET_URL;
+      var currentLanUrl = "";
+      var currentLocalUrl = TARGET_URL;
       var currentRecMount = "/storage/emulated/0";
       var isOperating = false;
       var latestState = "UNKNOWN";
@@ -989,6 +1061,51 @@
         return result;
       }
 
+      function setUrlRow(id, text, pending) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = text;
+        el.title = text;
+        if (pending) {
+          el.classList.add("pending");
+        } else {
+          el.classList.remove("pending");
+        }
+      }
+
+      function legacyCopy(text) {
+        try {
+          var ta = document.createElement("textarea");
+          ta.value = text;
+          ta.setAttribute("readonly", "");
+          ta.style.position = "fixed";
+          ta.style.top = "-1000px";
+          ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          ta.setSelectionRange(0, text.length);
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+        } catch (e) {}
+      }
+
+      function copyText(text, okPrefix) {
+        if (!text) {
+          showToast("暂未获取到地址");
+          return;
+        }
+        var done = function() { showToast(okPrefix + text); };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done).catch(function() {
+            legacyCopy(text);
+            done();
+          });
+        } else {
+          legacyCopy(text);
+          done();
+        }
+      }
+
       function applyStatus(info) {
         latestState = info.state;
         detectedArch = info.arch || detectedArch;
@@ -1023,7 +1140,12 @@
         document.getElementById("valPpid").textContent = info.ppid && info.ppid !== "--" ? info.ppid : "--";
         document.getElementById("valPpidRss").textContent = info.ppidRss && info.ppidRss !== "--" ? info.ppidRss : "--";
         
-        currentLanUrl = "http://" + info.lanIp + ":" + info.port;
+        currentLocalUrl = "http://127.0.0.1:" + info.port;
+        setUrlRow("valLocalUrl", currentLocalUrl, false);
+
+        var lanValid = !!info.lanIp && info.lanIp !== "127.0.0.1" && info.lanIp !== "0.0.0.0" && info.lanIp !== "localhost";
+        currentLanUrl = lanValid ? ("http://" + info.lanIp + ":" + info.port) : "";
+        setUrlRow("valLanUrl", lanValid ? currentLanUrl : "未检测到局域网 IP", !lanValid);
 
         var mountsBox = document.getElementById("mountsContainer");
         if (info.mounts && info.mounts.length > 0) {
@@ -1150,10 +1272,10 @@
         }
 
         if (mode === "browser") {
-          runCmd("am start -a android.intent.action.VIEW -d '" + TARGET_URL + "'");
+          runCmd("am start -a android.intent.action.VIEW -d '" + currentLocalUrl + "'");
           showToast("正在调起系统浏览器...");
         } else {
-          window.location.href = TARGET_URL;
+          window.location.href = currentLocalUrl;
         }
       }
 
@@ -1168,24 +1290,24 @@
       document.getElementById("btnStop").addEventListener("click", handleStop);
       document.getElementById("btnRestart").addEventListener("click", handleRestart);
 
-      document.getElementById("btnOpenWebUI").addEventListener("click", function() {
+      document.getElementById("btnOpenBrowser").addEventListener("click", function() {
         openWebUI("browser");
       });
 
-      document.getElementById("linkLaunchBrowser").addEventListener("click", function() {
-        openWebUI("browser");
-      });
-
-      document.getElementById("linkDirectNavigate").addEventListener("click", function() {
+      document.getElementById("btnOpenDirect").addEventListener("click", function() {
         openWebUI("direct");
       });
 
+      document.getElementById("btnCopyLocalUrl").addEventListener("click", function() {
+        copyText(currentLocalUrl, "已复制本机地址: ");
+      });
+
       document.getElementById("btnCopyLanUrl").addEventListener("click", function() {
-        navigator.clipboard.writeText(currentLanUrl).then(function() {
-          showToast("已复制局域网地址: " + currentLanUrl);
-        }).catch(function() {
-          showToast("局域网地址: " + currentLanUrl);
-        });
+        if (!currentLanUrl) {
+          showToast("暂未获取到局域网地址");
+          return;
+        }
+        copyText(currentLanUrl, "已复制局域网地址: ");
       });
 
       document.getElementById("btnCopyRecMount").addEventListener("click", function() {
