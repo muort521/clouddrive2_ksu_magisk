@@ -4,7 +4,7 @@ id: clouddrive2_ksu_magisk
 name: CloudDrive2 Pro
 summary: 为 Android Root 环境提供 CloudDrive2 系统级 FUSE3 挂载与 WebUI 控制台。
 description: README.md
-license: MIT
+license: LicenseRef-Custom-Non-Sale
 homepage: https://github.com/muort521/clouddrive2_ksu_magisk
 support: https://github.com/muort521/clouddrive2_ksu_magisk/issues
 tags: [clouddrive, fuse, mount, webui, system]
