@@ -52,3 +52,9 @@ sh /data/adb/modules/clouddrive2_ksu_magisk/scripts/cd2_ctl.sh autostart-disable
 - **持久化配置与账号数据目录**：`/data/adb/clouddrive/userdata`（卸载模块默认保留）
 - **运行日志路径**：`/data/adb/clouddrive/log/2026-11-04.log`
 - **官方版本发布页**：<https://github.com/cloud-fs/cloud-fs.github.io/releases>
+
+---
+
+## License
+
+[MIT](LICENSE)
