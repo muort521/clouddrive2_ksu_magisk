@@ -8,7 +8,7 @@ license: MIT
 homepage: https://github.com/muort521/clouddrive2_ksu_magisk
 support: https://github.com/muort521/clouddrive2_ksu_magisk/issues
 tags: [clouddrive, fuse, mount, webui, system]
-icon: assets/icon.webp
+icon: assets/icon.png
 
 authors:
   - name: Muort
