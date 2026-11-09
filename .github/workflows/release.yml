@@ -1,0 +1,265 @@
+name: Release
+
+# 触发方式
+#   - 推送 v* 标签      → 打包 + 发布 Release
+#   - Actions 手动运行   → 只打包并校验包结构，不发布（用来验证打包结果）
+#
+# 发布时序（对应「源码包与模块包发布时间一致」）：
+#   草稿 → 上传模块包 → 立刻发布。
+#   GitHub 的 Source code (zip/tar.gz) 只有在 Release 发布那一刻才由该标签指向的提交生成并归档，
+#   所以模块包与源码包必然落在同一个时间点；绝不会出现源码包时间早于模块包的情况。
+#   这也是为什么本 workflow 绝不留隔夜草稿：开跑前会先删掉同标签的残留草稿再重建。
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write # 创建 Release、上传资产
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  MODULE_DIR: Modules   # 只打包这个目录的「内容」；zip 内不会出现 Modules/ 这一层
+  VARIANT: apk-embedded # 资产名后缀 → <module.prop 的 id>_<version>_<VARIANT>.zip
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # ---------------------------------------------------------------- 元数据
+      - name: 读取 module.prop 并推导资产名
+        id: meta
+        run: |
+          set -euo pipefail
+          prop="${MODULE_DIR}/module.prop"
+          [ -f "$prop" ] || { echo "::error::找不到 ${prop}"; exit 1; }
+
+          # 去掉 CRLF，避免取值末尾带上 \r
+          field() { sed -n "s/^$1=//p" "$prop" | tr -d '\r' | head -n 1; }
+          module_id="$(field id)"
+          version="$(field version)"
+          version_code="$(field versionCode)"
+
+          [ -n "$module_id" ] && [ -n "$version" ] || { echo "::error::module.prop 缺少 id 或 version"; exit 1; }
+          [[ "$version_code" =~ ^[0-9]+$ ]] || { echo "::error::versionCode 必须是整数，当前为 '${version_code}'"; exit 1; }
+
+          asset_name="${module_id}_${version}_${VARIANT}.zip"
+
+          # 标签名必须与 module.prop 的 version 完全一致：
+          # 标签决定源码包内容，version 决定模块包内容，两者错位等于发布的源码对不上二进制
+          if [[ "$GITHUB_REF_NAME" == v* ]] && [ "$GITHUB_REF_NAME" != "$version" ]; then
+            echo "::error::标签 ${GITHUB_REF_NAME} 与 module.prop 的 version=${version} 不一致"
+            exit 1
+          fi
+
+          printf 'module_id=%s\nversion=%s\nversion_code=%s\nasset_name=%s\n' \
+            "$module_id" "$version" "$version_code" "$asset_name" >> "$GITHUB_OUTPUT"
+          echo "资产名：${asset_name}（versionCode=${version_code}）"
+
+      # -------------------------------------------------- 版本信息三处一致性校验
+      - name: 校验 update.json 与 module.yaml
+        if: github.event_name == 'push'
+        env:
+          MODULE_ID: ${{ steps.meta.outputs.module_id }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          VERSION_CODE: ${{ steps.meta.outputs.version_code }}
+          ASSET_NAME: ${{ steps.meta.outputs.asset_name }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          # 1) update.json 是管理器检查更新的入口，必须指向本次要发布的资产
+          jq -e --arg v "$VERSION" --argjson vc "$VERSION_CODE" --arg suffix "/${TAG}/${ASSET_NAME}" '
+            .version == $v and .versionCode == $vc and (.zipUrl | endswith($suffix))
+          ' update.json > /dev/null || {
+            echo "::error::update.json 与本次发布不一致（version / versionCode / zipUrl），请先改好再打标签"
+            jq '{version, versionCode, zipUrl}' update.json
+            exit 1
+          }
+
+          # 2) module.yaml 的 id 必须等于 module.prop 的 id，assetPattern 必须匹配资产名
+          yaml_id="$(sed -n 's/^[[:space:]]*id:[[:space:]]*//p' module.yaml | tr -d '\r' | tr -d '"' | head -n 1)"
+          pattern="$(sed -n 's/^[[:space:]]*assetPattern:[[:space:]]*//p' module.yaml | tr -d '\r' | tr -d '"' | head -n 1)"
+
+          [ "$yaml_id" = "$MODULE_ID" ] || {
+            echo "::error::module.yaml 的 id（${yaml_id}）与 module.prop 的 id（${MODULE_ID}）不一致"
+            exit 1
+          }
+          if [ -n "$pattern" ]; then
+            # shellcheck disable=SC2254  # 这里就是要用 glob 匹配
+            case "$ASSET_NAME" in
+              $pattern) ;;
+              *) echo "::error::module.yaml 的 release.assetPattern（${pattern}）匹配不到 ${ASSET_NAME}"; exit 1 ;;
+            esac
+          fi
+
+          echo "update.json / module.yaml 校验通过"
+
+      - name: 清理同标签的残留草稿
+        if: github.event_name == 'push'
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -uo pipefail
+          state="$(gh release view "$TAG" --json isDraft --jq '.isDraft' 2>/dev/null || true)"
+          case "$state" in
+            true)
+              echo "发现 ${TAG} 的残留草稿，删除后重建，保证源码包与模块包同一时刻生成"
+              gh release delete "$TAG" --yes --cleanup-tag=false
+              ;;
+            false)
+              echo "::error::${TAG} 已有已发布的 Release（不可变，无法覆盖）。请提升 versionCode 并换新标签。"
+              exit 1
+              ;;
+            *)
+              echo "${TAG} 尚无 Release，继续"
+              ;;
+          esac
+
+      # ---------------------------------------------------------------- 打包
+      - name: 打包 Modules 目录
+        id: pack
+        env:
+          ASSET_NAME: ${{ steps.meta.outputs.asset_name }}
+        run: |
+          set -euo pipefail
+          export TZ=UTC
+          mkdir -p dist
+          zip_abs="$PWD/dist/${ASSET_NAME}"
+
+          # 包内文件时间统一为本次提交时间，避免每次构建都因检出时间不同而抖动
+          stamp="$(git log -1 --format=%cI)"
+          mapfile -t entries < <(cd "$MODULE_DIR" && find . -mindepth 1 -maxdepth 1 ! -name '.*' -printf '%f\n' | LC_ALL=C sort)
+          [ ${#entries[@]} -gt 0 ] || { echo "::error::${MODULE_DIR} 是空目录"; exit 1; }
+
+          ( cd "$MODULE_DIR" && find . -mindepth 1 ! -name '.*' -exec touch -h -d "$stamp" {} + )
+
+          # 关键：先 cd 进 Modules 再打包「内容」，zip 根目录直接就是 module.prop / customize.sh / META-INF…
+          # -X 去掉 uid/gid 等额外属性，-9 最高压缩
+          ( cd "$MODULE_DIR" && zip -r9X "$zip_abs" "${entries[@]}" )
+
+          sha="$(sha256sum "$zip_abs" | cut -d' ' -f1)"
+          echo "sha256=${sha}" >> "$GITHUB_OUTPUT"
+          echo "生成 dist/${ASSET_NAME}（sha256=${sha}）"
+
+      - name: 校验包结构
+        env:
+          ASSET_NAME: ${{ steps.meta.outputs.asset_name }}
+        run: |
+          set -euo pipefail
+          list="$(unzip -Z1 "dist/${ASSET_NAME}")"
+
+          # 1) module.prop 必须在 zip 根目录（不能套一层模块文件夹）
+          grep -qx 'module.prop' <<< "$list" || { echo "::error::zip 根目录缺少 module.prop"; exit 1; }
+          # 2) 不允许出现 Modules/ 前缀
+          if grep -q '^Modules/' <<< "$list"; then
+            echo "::error::zip 内出现了 Modules/ 层级"; exit 1
+          fi
+          # 3) 刷机入口
+          grep -qx 'META-INF/com/google/android/update-binary' <<< "$list" \
+            || { echo "::error::缺少 META-INF/com/google/android/update-binary"; exit 1; }
+
+          for f in customize.sh service.sh uninstall.sh action.sh sepolicy.rule CloudDrive2.apk; do
+            grep -qx "$f" <<< "$list" || echo "::warning::zip 根目录缺少 ${f}"
+          done
+
+          echo "---- 包内容 ----"
+          head -n 40 <<< "$list"
+          echo "---- 共 $(grep -c . <<< "$list") 条 ----"
+
+      # ---------------------------------------------------------------- 发布
+      - name: 生成 Release 说明
+        if: github.event_name == 'push'
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          # 从 CHANGELOG.md 抽出与标签同名的小节，抽不到就交给 GitHub 自动生成
+          awk -v ver="$TAG" '
+            $0 ~ "^##[[:space:]]+" ver "[[:space:]]*$" { inside = 1; next }
+            inside && $0 ~ "^##[[:space:]]" { exit }
+            inside { print }
+          ' CHANGELOG.md | sed -e '/./,$!d' > dist/release-notes.md
+          echo "说明长度：$(wc -c < dist/release-notes.md) 字节"
+
+      - name: 发布 Release（草稿 → 上传 → 立即发布）
+        if: github.event_name == 'push'
+        env:
+          TAG: ${{ github.ref_name }}
+          ASSET_NAME: ${{ steps.meta.outputs.asset_name }}
+        run: |
+          set -euo pipefail
+          notes_args=(--generate-notes)
+          if [ -s dist/release-notes.md ]; then
+            notes_args=(--notes-file dist/release-notes.md)
+          fi
+
+          # 不可变发布要求资产先上传齐，所以必须先建草稿
+          gh release create "$TAG" --draft --verify-tag --title "$TAG" "${notes_args[@]}"
+          gh release upload "$TAG" "dist/${ASSET_NAME}"
+
+          # 紧接着发布：Source code (zip/tar.gz) 在这一刻由 ${TAG} 指向的提交生成，
+          # 与上面的模块包上传落在同一时间点，之后不可变、不会再被改写
+          # 注意：本仓库版本号形如 vX.Y.Z-rNN，「标签含 - 即预发布」的官方写法在这里会把 r14 判成预发布，
+          # 所以改为只在版本号里出现 rc/alpha/beta/pre/dev 时才标记为预发布
+          if [[ "$TAG" =~ -(rc|alpha|beta|pre|dev) ]]; then
+            gh release edit "$TAG" --draft=false --prerelease
+          else
+            gh release edit "$TAG" --draft=false --latest
+          fi
+
+      - name: 输出结果
+        env:
+          EVENT: ${{ github.event_name }}
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          ASSET_NAME: ${{ steps.meta.outputs.asset_name }}
+          SHA256: ${{ steps.pack.outputs.sha256 }}
+        run: |
+          set -uo pipefail
+          {
+            echo "### ${ASSET_NAME}"
+            echo
+            echo "| 项 | 值 |"
+            echo "| --- | --- |"
+            echo "| version | \`${VERSION}\` |"
+            echo "| sha256 | \`${SHA256}\` |"
+            if [ "$EVENT" = "push" ]; then
+              echo "| 下载 | https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/${ASSET_NAME} |"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$EVENT" = "push" ]; then
+            gh release view "$TAG" --json tagName,isDraft,isPrerelease,publishedAt,assets \
+              --jq '"tag=\(.tagName)  draft=\(.isDraft)  prerelease=\(.isPrerelease)  publishedAt=\(.publishedAt)",
+                    (.assets[] | "asset \(.name)  \(.size) bytes  createdAt=\(.createdAt)")'
+          else
+            echo "手动运行：仅打包校验，未发布。产物在 dist/${ASSET_NAME}"
+          fi
+
+      # 草稿残留会让下次同标签发布会直接失败，失败时顺手清掉
+      - name: 失败时清理草稿
+        if: failure() && github.event_name == 'push'
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -uo pipefail
+          state="$(gh release view "$TAG" --json isDraft --jq '.isDraft' 2>/dev/null || true)"
+          if [ "$state" = "true" ]; then
+            echo "删除未发布的草稿 ${TAG}"
+            gh release delete "$TAG" --yes --cleanup-tag=false
+          fi

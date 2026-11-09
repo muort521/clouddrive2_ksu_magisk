@@ -1,0 +1,16 @@
+# 换行符规则：仓库级规矩，跟着仓库走，换机器、移动端同步都一样
+#
+# 背景：Windows 侧 core.autocrlf=true 会把检出文件改成 CRLF，GitHub Desktop 随即提示
+#       "This diff contains a change in line endings from 'LF' to 'CRLF'"，
+#       整个文件变成假 diff。这里统一钉成 LF：
+#       - .sh / .prop / .rule 必须是 LF，Android 上的 sh 遇到 \r 会直接报错；
+#       - .yml / .json / .md 也保持 LF，避免无意义的整文件重写。
+* text=auto eol=lf
+
+# 二进制文件：禁止任何换行/编码转换
+*.apk  binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.webp binary
+*.zip  binary
