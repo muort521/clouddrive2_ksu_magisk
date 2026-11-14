@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.1.7-r15
+
+- 更新CloudDrive2核心至-1.2.0-beta
+- 官方1.2.0-beta详情：<https://github.com/cloud-fs/cloud-fs.github.io/releases/tag/v1.2.0-beta>
+
 ## v1.1.6-r14
 
 - WebUI 控制台操作区重构："打开 CloudDrive2 管理界面"拆分为**系统浏览器打开**（`am start` 调起）与**当前界面直入**（WebView 内跳转）两个并排按钮，均保留启动前状态检测逻辑

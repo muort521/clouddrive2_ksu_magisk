@@ -1,7 +1,7 @@
 id=clouddrive2_ksu_magisk
 name=CloudDrive2 Pro
-version=v1.1.6-r14
-versionCode=11614
+version=v1.1.7-r15
+versionCode=11715
 author=Muort
 description=[⏳ 初始化中] CloudDrive2 (Multi-Arch) · WebUI :19798
 updateJson=https://raw.githubusercontent.com/muort521/clouddrive2_ksu_magisk/main/update.json
