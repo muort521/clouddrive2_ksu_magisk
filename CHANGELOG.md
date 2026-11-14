@@ -2,7 +2,7 @@
 
 ## v1.1.7-r15
 
-- 更新CloudDrive2核心至-1.2.0-beta
+- 更新CloudDrive2核心(webui)至-1.2.0-beta
 - 官方1.2.0-beta详情：<https://github.com/cloud-fs/cloud-fs.github.io/releases/tag/v1.2.0-beta>
 
 ## v1.1.6-r14
